@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,6 +13,11 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -98,7 +104,7 @@ public class JDKHttpUtils {
 
     public static String reqPostForm(String urlParam, Map<String, Object> body, Map<String, String> header, int timeout) {
         String reqBody = getUrlParamsByMap(body);
-        return reqPost(urlParam, reqBody, header,true, timeout);
+        return reqPost(urlParam, reqBody, header, true, timeout);
     }
 
     public static String reqPostJson(String urlParam, Map<String, Object> body, Map<String, String> header, int timeout) {
@@ -107,7 +113,7 @@ public class JDKHttpUtils {
         }
         header.put(HttpConstant.HEADER_CONTENT_TYPE, HttpConstant.APPLICATION_JSON);
         String reqBody = JsonUtil.toJSONString(body);
-        return reqPost(urlParam, reqBody, header,false, timeout);
+        return reqPost(urlParam, reqBody, header, false, timeout);
     }
 
     /**
@@ -143,6 +149,13 @@ public class JDKHttpUtils {
                 connection.setRequestProperty(HttpConstant.HEADER_CONTENT_TYPE, HttpConstant.APPLICATION_FORM);
             }
 
+            if (connection instanceof HttpsURLConnection) {
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, new TrustManager[]{new TrustAllHostManager()}, new SecureRandom());
+                ((HttpsURLConnection) connection).setSSLSocketFactory(sc.getSocketFactory());
+                ((HttpsURLConnection) connection).setHostnameVerifier(new TrustAllHostnameVerifier());
+            }
+
             connection.setDoOutput(true);
             out = new OutputStreamWriter(connection.getOutputStream());
             out.write(body);
@@ -166,6 +179,10 @@ public class JDKHttpUtils {
             logger.error("MalformedURLException:", e);
         } catch (IOException e) {
             logger.error("IO错误:", e);
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("获取SSLContext失败:", e);
+        } catch (KeyManagementException e) {
+            logger.error("SSLContext 密钥管理错误:", e);
         } finally {
             try {
                 if (in != null) {
@@ -209,5 +226,27 @@ public class JDKHttpUtils {
             s = StringUtils.substringBeforeLast(s, "\n");
         }
         return s;
+    }
+
+
+    static class TrustAllHostManager implements X509TrustManager {
+
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        }
+
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[]{};
+        }
+    }
+
+    static class TrustAllHostnameVerifier implements HostnameVerifier {
+
+        @Override
+        public boolean verify(String s, SSLSession sslSession) {
+            return true;
+        }
     }
 }

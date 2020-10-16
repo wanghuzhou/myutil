@@ -1,5 +1,6 @@
 package com.wanghz.myutil.httpclient;
 
+import com.wanghz.myutil.common.exception.MyUtilRuntimeException;
 import com.wanghz.myutil.http.HttpConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -87,7 +88,7 @@ public class HttpClientUtils {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK) {
                 httpGet.abort();
-                throw new RuntimeException("HttpClient,error status code :" + statusCode);
+                throw new MyUtilRuntimeException("HttpClient,error status code :" + statusCode);
             }
             HttpEntity entity = response.getEntity();
             String result = null;
@@ -166,7 +167,7 @@ public class HttpClientUtils {
         }
         try {
             if (params != null && !params.isEmpty()) {
-                List<NameValuePair> pairs = new ArrayList<NameValuePair>(params.size());
+                List<NameValuePair> pairs = new ArrayList<>(params.size());
                 for (Map.Entry<String, String> entry : params.entrySet()) {
                     String value = entry.getValue();
                     if (value != null) {
@@ -188,7 +189,7 @@ public class HttpClientUtils {
             HttpEntity entity = response.getEntity();
             String result = null;
             if (entity != null) {
-                result = EntityUtils.toString(entity, "utf-8");
+                result = EntityUtils.toString(entity, HttpConstant.UTF8_ENCODE);
             }
             EntityUtils.consume(entity);
             response.close();
@@ -212,8 +213,8 @@ public class HttpClientUtils {
                     return true;
                 }
             }).build();
-            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
-            return HttpClients.custom().setSSLSocketFactory(sslsf).build();
+            SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext);
+            return HttpClients.custom().setSSLSocketFactory(sslSocketFactory).build();
         } catch (KeyManagementException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {

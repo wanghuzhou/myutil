@@ -1,8 +1,12 @@
 package com.wanghz.myutil.json;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.wanghz.myutil.common.exception.MyUtilRuntimeException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -20,9 +24,27 @@ import java.util.*;
 public class JsonUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonUtil.class);
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().setTimeZone(TimeZone.getDefault());
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .setTimeZone(TimeZone.getDefault())
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);;
 
     private JsonUtil() {
+    }
+
+    static {
+        // null值转为空字符串
+        /*OBJECT_MAPPER.getSerializerProvider().setNullValueSerializer(new JsonSerializer<Object>() {
+            @Override
+            public void serialize(Object arg0, JsonGenerator arg1, SerializerProvider arg2) throws IOException {
+                arg1.writeString("");
+            }
+        });*/
+//        OBJECT_MAPPER.getTypeFactory().constructParametricType(Long.class, String.class);
+        // long类型转为String
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
+        simpleModule.addSerializer(Long.class, ToStringSerializer.instance);
+        OBJECT_MAPPER.registerModule(simpleModule);
     }
 
     /**
@@ -41,7 +63,7 @@ public class JsonUtil {
             });
         } catch (JsonProcessingException e) {
             logger.error("Json格式化错误", e);
-            return new HashMap<>(0);
+            throw new MyUtilRuntimeException(e);
         }
     }
 
@@ -51,10 +73,10 @@ public class JsonUtil {
      * @param object 实体类
      * @return Map<String, String>
      */
-    public static Map<String, String> parseMap(Object object) {
+    public static <K, V> Map<K, V> parseMap(Object object) {
         try {
             String jsonStr = OBJECT_MAPPER.writeValueAsString(object);
-            return OBJECT_MAPPER.readValue(jsonStr, new TypeReference<Map<String, String>>() {
+            return OBJECT_MAPPER.readValue(jsonStr, new TypeReference<Map<K, V>>() {
                 @Override
                 public Type getType() {
                     return super.getType();
@@ -114,6 +136,35 @@ public class JsonUtil {
 //        return JSON.toJSONString(object, SerializerFeature.DisableCircularReferenceDetect);
         try {
             return OBJECT_MAPPER.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            logger.error("Json转换出错", e);
+            throw new MyUtilRuntimeException(e);
+        }
+    }
+
+    /**
+     * 解析复杂嵌套json
+     * @param jsonStr json字符串
+     * @return JsonNode
+     */
+    public static JsonNode readTree(String jsonStr) {
+        try {
+            return OBJECT_MAPPER.readTree(jsonStr);
+        } catch (JsonProcessingException e) {
+            logger.error("Json转换出错", e);
+            throw new MyUtilRuntimeException(e);
+        }
+    }
+
+    /**
+     * 解析复杂嵌套json
+     * @param object json对象
+     * @return JsonNode
+     */
+    public static JsonNode readTree(Object object) {
+        try {
+            String jsonStr = OBJECT_MAPPER.writeValueAsString(object);
+            return OBJECT_MAPPER.readTree(jsonStr);
         } catch (JsonProcessingException e) {
             logger.error("Json转换出错", e);
             throw new MyUtilRuntimeException(e);
