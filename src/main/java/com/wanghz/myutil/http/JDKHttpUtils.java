@@ -1,11 +1,10 @@
 package com.wanghz.myutil.http;
 
 import com.wanghz.myutil.json.JsonUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,11 +12,6 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,13 +20,13 @@ public class JDKHttpUtils {
     private static final Logger logger = LoggerFactory.getLogger(JDKHttpUtils.class);
 
     public static String reqGet(String urlParam, Map<String, Object> map) {
-        String param = getUrlParamsByMap(map);
+        String param = HttpCommonUtils.getUrlParamsByMap(map);
         String url = urlParam + "?" + param;
         return reqGet(url);
     }
 
     public static String reqGet(String urlParam, Map<String, Object> param, Map<String, String> header, int timeout) {
-        String paramStr = getUrlParamsByMap(param);
+        String paramStr = HttpCommonUtils.getUrlParamsByMap(param);
         String url = urlParam + "?" + paramStr;
         return reqGet(url, header, timeout);
     }
@@ -103,7 +97,7 @@ public class JDKHttpUtils {
 
 
     public static String reqPostForm(String urlParam, Map<String, Object> body, Map<String, String> header, int timeout) {
-        String reqBody = getUrlParamsByMap(body);
+        String reqBody = HttpCommonUtils.getUrlParamsByMap(body);
         return reqPost(urlParam, reqBody, header, true, timeout);
     }
 
@@ -150,10 +144,8 @@ public class JDKHttpUtils {
             }
 
             if (connection instanceof HttpsURLConnection) {
-                SSLContext sc = SSLContext.getInstance("SSL");
-                sc.init(null, new TrustManager[]{new TrustAllHostManager()}, new SecureRandom());
-                ((HttpsURLConnection) connection).setSSLSocketFactory(sc.getSocketFactory());
-                ((HttpsURLConnection) connection).setHostnameVerifier(new TrustAllHostnameVerifier());
+                ((HttpsURLConnection) connection).setSSLSocketFactory(HttpCommonUtils.createSSLSocketFactory());
+                ((HttpsURLConnection) connection).setHostnameVerifier(HttpCommonUtils.trustHostnameVerifier());
             }
 
             connection.setDoOutput(true);
@@ -179,10 +171,6 @@ public class JDKHttpUtils {
             logger.error("MalformedURLException:", e);
         } catch (IOException e) {
             logger.error("IO错误:", e);
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("获取SSLContext失败:", e);
-        } catch (KeyManagementException e) {
-            logger.error("SSLContext 密钥管理错误:", e);
         } finally {
             try {
                 if (in != null) {
@@ -198,55 +186,4 @@ public class JDKHttpUtils {
         return result.toString();
     }
 
-    public static String getUrlParamsByMap(Map<String, Object> map) {
-        if (map == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
-        }
-        String s = sb.toString();
-        if (s.endsWith("&")) {
-            s = StringUtils.substringBeforeLast(s, "&");
-        }
-        return s;
-    }
-
-    public static String getFormParamsByMap(Map<String, Object> map) {
-        if (map == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            sb.append(entry.getKey()).append(":").append(entry.getValue()).append("\n");
-        }
-        String s = sb.toString();
-        if (s.endsWith("&")) {
-            s = StringUtils.substringBeforeLast(s, "\n");
-        }
-        return s;
-    }
-
-
-    static class TrustAllHostManager implements X509TrustManager {
-
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        }
-
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        }
-
-        public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[]{};
-        }
-    }
-
-    static class TrustAllHostnameVerifier implements HostnameVerifier {
-
-        @Override
-        public boolean verify(String s, SSLSession sslSession) {
-            return true;
-        }
-    }
 }

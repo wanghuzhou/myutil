@@ -26,7 +26,7 @@ public class JsonUtil {
     private static final Logger logger = LoggerFactory.getLogger(JsonUtil.class);
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .setTimeZone(TimeZone.getDefault())
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL);;
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     private JsonUtil() {
     }
@@ -144,6 +144,7 @@ public class JsonUtil {
 
     /**
      * 解析复杂嵌套json
+     *
      * @param jsonStr json字符串
      * @return JsonNode
      */
@@ -158,6 +159,7 @@ public class JsonUtil {
 
     /**
      * 解析复杂嵌套json
+     *
      * @param object json对象
      * @return JsonNode
      */

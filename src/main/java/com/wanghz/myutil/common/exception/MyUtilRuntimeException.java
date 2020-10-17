@@ -2,6 +2,7 @@ package com.wanghz.myutil.common.exception;
 
 /**
  * MyUtil自定义运行时错误
+ *
  * @author wanghz
  * @since 2020年10月9日
  */

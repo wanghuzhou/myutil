@@ -1,14 +1,12 @@
 package com.wanghz.myutil.okhttp;
 
+import com.wanghz.myutil.http.HttpCommonUtils;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
 import java.io.IOException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -25,9 +23,7 @@ public class OKHttpUtils {
     public final static int READ_TIMEOUT = 30;
     public final static int WRITE_TIMEOUT = 30;
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private static final byte[] LOCKER = new byte[0];
-    private static OKHttpUtils mInstance;
-    private OkHttpClient mOkHttpClient;
+    private final OkHttpClient mOkHttpClient;
 
     /**
      * 自定义网络回调接口
@@ -44,15 +40,17 @@ public class OKHttpUtils {
         clientBuilder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS);//读取超时
         clientBuilder.writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS);//写入超时
         //支持HTTPS请求，跳过证书验证
-//        clientBuilder.sslSocketFactory(createSSLSocketFactory());
-        clientBuilder.sslSocketFactory(createSSLSocketFactory(), new TrustAllCerts());
-        clientBuilder.hostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        });
-        mOkHttpClient = clientBuilder.build();
+        clientBuilder.sslSocketFactory(HttpCommonUtils.createSSLSocketFactory(), HttpCommonUtils.trustAllCerts());
+        clientBuilder.hostnameVerifier(HttpCommonUtils.trustHostnameVerifier());
+
+        // 连接复用默认配置
+        ConnectionPool connectionPool = new ConnectionPool(5, 5, TimeUnit.MINUTES);
+
+        mOkHttpClient = clientBuilder
+                .addInterceptor(new LoggingInterceptor())
+                .connectionPool(connectionPool)
+                .build();
+
     }
 
     /**
@@ -61,14 +59,11 @@ public class OKHttpUtils {
      * @return
      */
     public static OKHttpUtils getInstance() {
-        if (mInstance == null) {
-            synchronized (LOCKER) {
-                if (mInstance == null) {
-                    mInstance = new OKHttpUtils();
-                }
-            }
-        }
-        return mInstance;
+        return OKHttpInstance.INSTANCE;
+    }
+
+    private static class OKHttpInstance {
+        private static final OKHttpUtils INSTANCE = new OKHttpUtils();
     }
 
     /**
@@ -100,7 +95,7 @@ public class OKHttpUtils {
      * @param bodyParams
      * @return
      */
-    public Response reqPost(String url, Map<String, String> bodyParams) {
+    public Response reqPostForm(String url, Map<String, String> bodyParams) {
         //1构造RequestBody
         RequestBody body = setRequestBody(bodyParams);
         //2 构造Request
@@ -179,19 +174,19 @@ public class OKHttpUtils {
     /**
      * post的请求参数，构造RequestBody
      *
-     * @param BodyParams
+     * @param bodyParams
      * @return
      */
-    private RequestBody setRequestBody(Map<String, String> BodyParams) {
-        RequestBody body = null;
-        okhttp3.FormBody.Builder formEncodingBuilder = new okhttp3.FormBody.Builder();
-        if (BodyParams != null) {
-            Iterator<String> iterator = BodyParams.keySet().iterator();
-            String key = "";
+    private RequestBody setRequestBody(Map<String, String> bodyParams) {
+        RequestBody body;
+        FormBody.Builder formEncodingBuilder = new FormBody.Builder(StandardCharsets.UTF_8);
+        if (bodyParams != null) {
+            Iterator<String> iterator = bodyParams.keySet().iterator();
+            String key;
             while (iterator.hasNext()) {
-                key = iterator.next().toString();
-                formEncodingBuilder.add(key, BodyParams.get(key));
-                logger.info("post http, post_Params==={}===={}", key, BodyParams.get(key));
+                key = iterator.next();
+                formEncodingBuilder.add(key, bodyParams.get(key));
+                logger.debug("post http, post_Params==={}===={}", key, bodyParams.get(key));
             }
         }
         body = formEncodingBuilder.build();
@@ -200,21 +195,10 @@ public class OKHttpUtils {
     }
 
     /**
-     * 生成安全套接字工厂，用于https请求的证书跳过
+     * json提交
      *
-     * @return
+     * @throws IOException 抛出IO错误
      */
-    private SSLSocketFactory createSSLSocketFactory() {
-        SSLSocketFactory ssfFactory = null;
-        try {
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, new TrustManager[]{new TrustAllCerts()}, new SecureRandom());
-            ssfFactory = sc.getSocketFactory();
-        } catch (Exception e) {
-        }
-        return ssfFactory;
-    }
-
     public String reqPostJson(String url, String json) throws IOException {
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
@@ -229,7 +213,7 @@ public class OKHttpUtils {
         }
     }
 
-    public void postJsonAsyn(String url, String json, final NetCall netCall) throws IOException {
+    public void postJsonAsync(String url, String json, final NetCall netCall) {
         RequestBody body = RequestBody.create(JSON, json);
         //2 构造Request
         Request.Builder requestBuilder = new Request.Builder();
@@ -251,22 +235,23 @@ public class OKHttpUtils {
         });
     }
 
-    /**
-     * 用于信任所有证书
-     */
-    class TrustAllCerts implements X509TrustManager {
+    static class LoggingInterceptor implements Interceptor {
         @Override
-        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-        }
+        public Response intercept(Interceptor.Chain chain) throws IOException {
+            Request request = chain.request();
 
-        @Override
-        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+            long t1 = System.nanoTime();
+            logger.info(String.format("Sending request %s on %s%n%s",
+                    request.url(), chain.connection(), request.headers()));
+            System.out.printf("Sending request %s on %s%n%s%n",
+                    request.url(), chain.connection(), request.headers());
+            Response response = chain.proceed(request);
 
-        }
+            long t2 = System.nanoTime();
+            logger.info(String.format("Received response for %s in %.1fms%n%s",
+                    response.request().url(), (t2 - t1) / 1e6d, response.headers()));
 
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[0];
+            return response;
         }
     }
 }
