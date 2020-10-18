@@ -39,9 +39,14 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+/**
+ * HttpClient4工具类
+ */
 public class HttpClientUtils {
     private static final Logger logger = LoggerFactory.getLogger(HttpClientUtils.class);
     private static final CloseableHttpClient httpClient;
@@ -68,25 +73,21 @@ public class HttpClientUtils {
                 .build();
     }
 
-    public static String reqGet(String url) throws IOException {
-        return reqGet(url, null);
+    public static String get(String url) throws IOException {
+        return get(url, null);
     }
 
-    public static String reqGet(String url, Map<String, String> params) throws IOException {
+    public static String get(String url, Map<String, String> params) throws IOException {
         try {
-            return reqGet(url, params, HttpConstant.UTF8_ENCODE);
+            return get(url, params, HttpConstant.UTF8_ENCODE);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-/*    public static String doGetSSL(String url, Map<String, String> params) {
-        return doGetSSL(url, params, HttpConstant.UTF8_ENCODE);
-    }*/
-
-    public static String doPost(String url, Map<String, String> params) throws IOException {
-        return doPost(url, params, HttpConstant.UTF8_ENCODE);
+    public static String post(String url, Map<String, String> params) throws IOException {
+        return post(url, params, HttpConstant.UTF8_ENCODE);
     }
 
     /**
@@ -97,7 +98,7 @@ public class HttpClientUtils {
      * @param charset 编码格式
      * @return 页面内容
      */
-    public static String reqGet(String url, Map<String, String> params, String charset) throws IOException, URISyntaxException {
+    public static String get(String url, Map<String, String> params, String charset) throws IOException, URISyntaxException {
         HttpGet httpGet;
         if (params != null && !params.isEmpty()) {
             List<NameValuePair> pairs = new ArrayList<>(params.size());
@@ -154,17 +155,12 @@ public class HttpClientUtils {
      * @return 页面内容
      * @throws IOException
      */
-    public static String doPost(String url, Map<String, String> params, String charset) throws IOException {
+    public static String post(String url, Map<String, String> params, String charset) throws IOException {
         List<NameValuePair> pairs = null;
         if (params != null && !params.isEmpty()) {
-            pairs = new ArrayList<>(params.size());
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                String value = entry.getValue();
-                if (value != null) {
-                    pairs.add(new BasicNameValuePair(entry.getKey(), value));
-                }
-            }
+            pairs = convertMap2BasicNameValuePairs(params);
         }
+
         HttpPost httpPost = new HttpPost(url);
         if (pairs != null && pairs.size() > 0) {
             httpPost.setEntity(new UrlEncodedFormEntity(pairs, charset));
@@ -233,5 +229,16 @@ public class HttpClientUtils {
             e.printStackTrace();
         }
         return sslContext;
+    }
+
+    private static NameValuePair[] convertMap2NameValuePairs(Map<String, String> data) {
+        return data.entrySet().stream().map(entry -> new BasicNameValuePair(entry.getKey(), entry.getValue()))
+                .toArray(NameValuePair[]::new);
+    }
+
+    private static List<NameValuePair> convertMap2BasicNameValuePairs(Map<String, String> data) {
+        return data.entrySet().stream()
+                .map(entry -> new BasicNameValuePair(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 }

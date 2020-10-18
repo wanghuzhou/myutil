@@ -15,24 +15,32 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 通过JDK HttpURLConnection编写的HTTP工具类
+ *
+ * @author wanghz
+ */
 public class JDKHttpUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(JDKHttpUtils.class);
 
-    public static String reqGet(String urlParam, Map<String, Object> map) {
-        String param = HttpCommonUtils.getUrlParamsByMap(map);
-        String url = urlParam + "?" + param;
-        return reqGet(url);
+    public static String get(String urlParam) {
+        return get(urlParam, null);
     }
 
-    public static String reqGet(String urlParam, Map<String, Object> param, Map<String, String> header, int timeout) {
+    public static String get(String urlParam, Map<String, Object> param) {
+        return get(urlParam, param, null, 0);
+    }
+
+    public static String get(String urlParam, Map<String, Object> param, Map<String, String> header, int timeout) {
         String paramStr = HttpCommonUtils.getUrlParamsByMap(param);
         String url = urlParam + "?" + paramStr;
-        return reqGet(url, header, timeout);
+        return get(url, header, timeout);
     }
 
-    public static String reqGet(String urlParam) {
-        return reqGet(urlParam, null, 0);
+    public static <T> T getForObject(String urlParam, Class<T> tClass) {
+        String result = get(urlParam, null);
+        return JsonUtil.parseObject(result, tClass);
     }
 
     /**
@@ -43,7 +51,7 @@ public class JDKHttpUtils {
      * @param timeout  超时时间 秒
      * @return HTTP响应结果
      */
-    public static String reqGet(String urlParam, Map<String, String> header, int timeout) {
+    public static String get(String urlParam, Map<String, String> header, int timeout) {
         HttpURLConnection connection;
         StringBuilder result = new StringBuilder();
         BufferedReader in = null;
@@ -96,18 +104,40 @@ public class JDKHttpUtils {
     }
 
 
-    public static String reqPostForm(String urlParam, Map<String, Object> body, Map<String, String> header, int timeout) {
+    /**
+     * post表单提交
+     *
+     * @param urlParam url地址
+     * @param body     body
+     * @param header   请求头
+     * @param timeout  超时时间 秒
+     * @return string
+     */
+    public static String postForm(String urlParam, Map<String, Object> body, Map<String, String> header, int timeout) {
         String reqBody = HttpCommonUtils.getUrlParamsByMap(body);
-        return reqPost(urlParam, reqBody, header, true, timeout);
+        if (header == null) {
+            header = new HashMap<>();
+        }
+        header.put(HttpConstant.HEADER_CONTENT_TYPE, HttpConstant.APPLICATION_FORM);
+        return post(urlParam, reqBody, header, timeout);
     }
 
-    public static String reqPostJson(String urlParam, Map<String, Object> body, Map<String, String> header, int timeout) {
+    /**
+     * post json提交
+     *
+     * @param urlParam url地址
+     * @param body     body
+     * @param header   请求头
+     * @param timeout  超时时间 秒
+     * @return string
+     */
+    public static String postJson(String urlParam, Map<String, Object> body, Map<String, String> header, int timeout) {
         if (header == null) {
             header = new HashMap<>();
         }
         header.put(HttpConstant.HEADER_CONTENT_TYPE, HttpConstant.APPLICATION_JSON);
         String reqBody = JsonUtil.toJSONString(body);
-        return reqPost(urlParam, reqBody, header, false, timeout);
+        return post(urlParam, reqBody, header, timeout);
     }
 
     /**
@@ -118,7 +148,7 @@ public class JDKHttpUtils {
      * @param timeout  超时时间 秒
      * @return HTTP响应结果
      */
-    public static String reqPost(String urlParam, String body, Map<String, String> header, boolean isForm, int timeout) {
+    public static String post(String urlParam, String body, Map<String, String> header, int timeout) {
         HttpURLConnection connection;
         StringBuilder result = new StringBuilder();
         BufferedReader in = null;
@@ -137,10 +167,6 @@ public class JDKHttpUtils {
                 for (String tmp : header.keySet()) {
                     connection.setRequestProperty(tmp, header.get(tmp));
                 }
-            }
-
-            if (isForm) {
-                connection.setRequestProperty(HttpConstant.HEADER_CONTENT_TYPE, HttpConstant.APPLICATION_FORM);
             }
 
             if (connection instanceof HttpsURLConnection) {

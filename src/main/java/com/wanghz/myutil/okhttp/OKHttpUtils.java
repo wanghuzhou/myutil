@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * OKHttp3 工具类
+ *
  * @author wanghz
  * Created on 2020-08-30.
  */
@@ -72,7 +74,7 @@ public class OKHttpUtils {
      * @param url
      * @return
      */
-    public Response reqGet(String url) {
+    public Response get(String url) {
         //1 构造Request
         Request.Builder builder = new Request.Builder();
         Request request = builder.get().url(url).build();
@@ -95,9 +97,9 @@ public class OKHttpUtils {
      * @param bodyParams
      * @return
      */
-    public Response reqPostForm(String url, Map<String, String> bodyParams) {
+    public Response postForm(String url, Map<String, String> bodyParams) {
         //1构造RequestBody
-        RequestBody body = setRequestBody(bodyParams);
+        RequestBody body = setFormBody(bodyParams);
         //2 构造Request
         Request.Builder requestBuilder = new Request.Builder();
         Request request = requestBuilder.post(body).url(url).build();
@@ -120,7 +122,7 @@ public class OKHttpUtils {
      * @param netCall
      * @return
      */
-    public void reqGetAsync(String url, final NetCall netCall) {
+    public void getAsync(String url, final NetCall netCall) {
         //1 构造Request
         Request.Builder builder = new Request.Builder();
         Request request = builder.get().url(url).build();
@@ -148,9 +150,9 @@ public class OKHttpUtils {
      * @param bodyParams
      * @param netCall
      */
-    public void reqPostAsync(String url, Map<String, String> bodyParams, final NetCall netCall) {
+    public void postAsync(String url, Map<String, String> bodyParams, final NetCall netCall) {
         //1构造RequestBody
-        RequestBody body = setRequestBody(bodyParams);
+        RequestBody body = setFormBody(bodyParams);
         //2 构造Request
         Request.Builder requestBuilder = new Request.Builder();
         Request request = requestBuilder.post(body).url(url).build();
@@ -177,7 +179,7 @@ public class OKHttpUtils {
      * @param bodyParams
      * @return
      */
-    private RequestBody setRequestBody(Map<String, String> bodyParams) {
+    private RequestBody setFormBody(Map<String, String> bodyParams) {
         RequestBody body;
         FormBody.Builder formEncodingBuilder = new FormBody.Builder(StandardCharsets.UTF_8);
         if (bodyParams != null) {
@@ -199,7 +201,7 @@ public class OKHttpUtils {
      *
      * @throws IOException 抛出IO错误
      */
-    public String reqPostJson(String url, String json) throws IOException {
+    public String postJson(String url, String json) throws IOException {
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
                 .url(url)
@@ -235,6 +237,9 @@ public class OKHttpUtils {
         });
     }
 
+    /**
+     * OKHttp 日志拦截器
+     */
     static class LoggingInterceptor implements Interceptor {
         @Override
         public Response intercept(Interceptor.Chain chain) throws IOException {
