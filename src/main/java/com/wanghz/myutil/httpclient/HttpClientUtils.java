@@ -5,6 +5,7 @@ import com.wanghz.myutil.http.HttpCommonUtils;
 import com.wanghz.myutil.http.HttpConstant;
 import com.wanghz.myutil.json.JsonUtil;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -39,7 +40,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -67,9 +67,14 @@ public class HttpClientUtils {
                 .setSocketTimeout(HttpConstant.EXECUTE_TIMEOUT)
                 .setConnectionRequestTimeout(3000)
                 .build();
+        // 去除User-Agent
+        HttpRequestInterceptor requestInterceptor = (request, context) -> request.removeHeaders("User-Agent");
+
         httpClient = HttpClientBuilder.create()
+//                .disableContentCompression()
                 .setDefaultRequestConfig(config)
                 .setConnectionManager(poolConnManager)
+                .addInterceptorLast(requestInterceptor)
                 .build();
     }
 

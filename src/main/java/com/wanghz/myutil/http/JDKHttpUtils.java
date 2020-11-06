@@ -65,6 +65,7 @@ public class JDKHttpUtils {
             connection.setConnectTimeout(HttpConstant.CONNECT_TIMEOUT);
             connection.setReadTimeout(timeout);
             connection.setRequestMethod("GET");
+//          connection.setRequestProperty("User-Agent", "");
             // 请求头
             if (header != null && !header.isEmpty()) {
                 for (String tmp : header.keySet()) {

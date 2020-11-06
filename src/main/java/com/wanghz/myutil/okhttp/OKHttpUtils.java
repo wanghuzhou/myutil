@@ -50,6 +50,7 @@ public class OKHttpUtils {
 
         mOkHttpClient = clientBuilder
                 .addInterceptor(new LoggingInterceptor())
+                .addNetworkInterceptor(new UserAgentInterceptor(""))
                 .connectionPool(connectionPool)
                 .build();
 
@@ -257,6 +258,27 @@ public class OKHttpUtils {
                     response.request().url(), (t2 - t1) / 1e6d, response.headers()));
 
             return response;
+        }
+    }
+
+    /**
+     * 客户端标识UserAgent拦截
+     */
+    static class UserAgentInterceptor implements Interceptor {
+
+        private final String userAgent;
+
+        public UserAgentInterceptor(String userAgent) {
+            this.userAgent = userAgent;
+        }
+
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+            Request originalRequest = chain.request();
+            Request requestWithUserAgent = originalRequest.newBuilder()
+                    .header("User-Agent", userAgent)
+                    .build();
+            return chain.proceed(requestWithUserAgent);
         }
     }
 }
