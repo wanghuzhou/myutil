@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
@@ -24,8 +25,8 @@ public class OKHttpUtils {
     public final static int CONNECT_TIMEOUT = 3;
     public final static int READ_TIMEOUT = 30;
     public final static int WRITE_TIMEOUT = 30;
-    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private final OkHttpClient mOkHttpClient;
+    public static final MediaType JSON = MediaType.parse("application/json;charset=utf-8");
+    private static OkHttpClient mOkHttpClient;
 
     /**
      * 自定义网络回调接口
@@ -36,7 +37,7 @@ public class OKHttpUtils {
         void failed(Call call, IOException e);
     }
 
-    private OKHttpUtils() {
+    static {
         OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
         clientBuilder.connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS);//连接超时
         clientBuilder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS);//读取超时
@@ -61,13 +62,13 @@ public class OKHttpUtils {
      *
      * @return
      */
-    public static OKHttpUtils getInstance() {
+/*    public static OKHttpUtils getInstance() {
         return OKHttpInstance.INSTANCE;
     }
 
     private static class OKHttpInstance {
         private static final OKHttpUtils INSTANCE = new OKHttpUtils();
-    }
+    }*/
 
     /**
      * get请求，同步方式，获取网络数据，是在主线程中执行的，需要新起线程，将其放到子线程中执行
@@ -75,7 +76,7 @@ public class OKHttpUtils {
      * @param url
      * @return
      */
-    public Response get(String url) {
+    public static Response get(String url) {
         //1 构造Request
         Request.Builder builder = new Request.Builder();
         Request request = builder.get().url(url).build();
@@ -98,9 +99,27 @@ public class OKHttpUtils {
      * @param bodyParams
      * @return
      */
-    public Response postForm(String url, Map<String, String> bodyParams) {
+    public static Response postForm(String url, Map<String, String> bodyParams) {
         //1构造RequestBody
         RequestBody body = setFormBody(bodyParams);
+        //2 构造Request
+        Request.Builder requestBuilder = new Request.Builder();
+        Request request = requestBuilder.post(body).url(url).build();
+        //3 将Request封装为Call
+        Call call = mOkHttpClient.newCall(request);
+        //4 执行Call，得到response
+        Response response = null;
+        try {
+            response = call.execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
+
+    public static Response postForm(String url, Map<String, String> bodyParams, String charset) {
+        //1构造RequestBody
+        RequestBody body = setFormBody(bodyParams, Charset.forName(charset));
         //2 构造Request
         Request.Builder requestBuilder = new Request.Builder();
         Request request = requestBuilder.post(body).url(url).build();
@@ -180,9 +199,12 @@ public class OKHttpUtils {
      * @param bodyParams
      * @return
      */
-    private RequestBody setFormBody(Map<String, String> bodyParams) {
-        RequestBody body;
-        FormBody.Builder formEncodingBuilder = new FormBody.Builder(StandardCharsets.UTF_8);
+    private static RequestBody setFormBody(Map<String, String> bodyParams) {
+        return setFormBody(bodyParams, StandardCharsets.UTF_8);
+    }
+
+    private static RequestBody setFormBody(Map<String, String> bodyParams, Charset charset) {
+        FormBody.Builder formEncodingBuilder = new FormBody.Builder(charset);
         if (bodyParams != null) {
             Iterator<String> iterator = bodyParams.keySet().iterator();
             String key;
@@ -192,9 +214,7 @@ public class OKHttpUtils {
                 logger.debug("post http, post_Params==={}===={}", key, bodyParams.get(key));
             }
         }
-        body = formEncodingBuilder.build();
-        return body;
-
+        return formEncodingBuilder.build();
     }
 
     /**
@@ -202,7 +222,7 @@ public class OKHttpUtils {
      *
      * @throws IOException 抛出IO错误
      */
-    public String postJson(String url, String json) throws IOException {
+    public static String postJson(String url, String json) throws IOException {
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
                 .url(url)

@@ -92,7 +92,6 @@ public class IdWorker {
      * 自定义id 生成方式
      *
      * @param identifierGenerator id 生成器
-     *                            //@see GlobalConfig#setIdentifierGenerator(IdentifierGenerator)
      */
     public static void setIdentifierGenerator(IdentifierGenerator identifierGenerator) {
         IDENTIFIER_GENERATOR = identifierGenerator;

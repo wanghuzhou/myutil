@@ -124,17 +124,30 @@ public class HttpClientUtils {
 
     }
 
-    public static String reqPostJson(String url, Map<String, String> params, String charset) throws IOException {
+    public static String postJson(String url, Map<String, String> params) throws IOException {
 /*        StringEntity stringEntity = new StringEntity(JsonUtil.toJSONString(params), charset);
         stringEntity.setContentEncoding(HttpConstant.UTF8_ENCODE);
         stringEntity.setContentType(HttpConstant.APPLICATION_JSON);*/
-        StringEntity entity = new StringEntity(JsonUtil.toJSONString(params), ContentType.APPLICATION_JSON);
+        /*StringEntity entity = new StringEntity(JsonUtil.toJSONString(params), ContentType.APPLICATION_JSON);
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setEntity(entity);*/
+        return postJson(url, params, HttpConstant.UTF8_ENCODE);
+    }
+
+    public static String postJson(String url, Map<String, String> params, String charset) throws IOException {
+        StringEntity entity = new StringEntity(JsonUtil.toJSONString(params), charset);
+        entity.setContentEncoding(HttpConstant.UTF8_ENCODE);
+        entity.setContentType(HttpConstant.APPLICATION_JSON);
         HttpPost httpPost = new HttpPost(url);
         httpPost.setEntity(entity);
-        return execute(httpPost);
+        return execute(httpPost, charset);
     }
 
     public static String execute(final HttpUriRequest request) throws IOException {
+        return execute(request, HttpConstant.UTF8_ENCODE);
+    }
+
+    public static String execute(final HttpUriRequest request, String charset) throws IOException {
         CloseableHttpResponse response = httpClient.execute(request);
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode != HttpStatus.SC_OK) {
@@ -145,7 +158,7 @@ public class HttpClientUtils {
         HttpEntity entity = response.getEntity();
         String result = null;
         if (entity != null) {
-            result = EntityUtils.toString(entity, HttpConstant.UTF8_ENCODE);
+            result = EntityUtils.toString(entity, charset);
         }
         EntityUtils.consume(entity);
         return result;
@@ -170,7 +183,7 @@ public class HttpClientUtils {
         if (pairs != null && pairs.size() > 0) {
             httpPost.setEntity(new UrlEncodedFormEntity(pairs, charset));
         }
-        return execute(httpPost);
+        return execute(httpPost, charset);
     }
 
     /**
