@@ -17,7 +17,6 @@ rebel.xml
 *.iml
 *.ipr
 target
-/src/test/java
 
 ### NetBeans ###
 /nbproject/private/
