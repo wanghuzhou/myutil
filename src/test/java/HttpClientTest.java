@@ -1,6 +1,4 @@
-import com.wanghz.myutil.http.HttpConstant;
 import com.wanghz.myutil.httpclient.HttpClientUtils;
-import com.wanghz.myutil.okhttp.OKHttpUtils;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -26,8 +24,7 @@ public class HttpClientTest {
         Map<String, String> param = new HashMap<>();
         param.put("name", "哈哈");
         param.put("age", "22");
-
-        String result = HttpClientUtils.postJson(url, param, "utf-8");
+        String result = HttpClientUtils.postJson(url, param);
         System.out.println(result);
     }
 

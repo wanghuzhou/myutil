@@ -274,8 +274,10 @@ public class OKHttpUtils {
             Response response = chain.proceed(request);
 
             long t2 = System.nanoTime();
+            ResponseBody responseBody = response.peekBody(1024 * 1024);
             logger.info(String.format("Received response for %s in %.1fms%n%s",
                     response.request().url(), (t2 - t1) / 1e6d, response.headers()));
+            System.out.println("出参: " + responseBody.string());
 
             return response;
         }

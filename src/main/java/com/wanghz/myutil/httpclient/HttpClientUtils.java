@@ -1,13 +1,10 @@
 package com.wanghz.myutil.httpclient;
 
+import com.alibaba.fastjson.JSON;
 import com.wanghz.myutil.common.exception.MyUtilRuntimeException;
 import com.wanghz.myutil.http.HttpCommonUtils;
 import com.wanghz.myutil.http.HttpConstant;
-import com.wanghz.myutil.json.JsonUtil;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
+import org.apache.http.*;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -17,17 +14,19 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
-import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicHeaderElementIterator;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -61,7 +60,9 @@ public class HttpClientUtils {
                 .build();
         PoolingHttpClientConnectionManager poolConnManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
         poolConnManager.setMaxTotal(50);
-        poolConnManager.setDefaultMaxPerRoute(2);
+        poolConnManager.setDefaultMaxPerRoute(5);
+        poolConnManager.closeExpiredConnections();
+//        poolConnManager.closeIdleConnections(10, TimeUnit.SECONDS);
         RequestConfig config = RequestConfig.custom()
                 .setConnectTimeout(HttpConstant.CONNECT_TIMEOUT)
                 .setSocketTimeout(HttpConstant.EXECUTE_TIMEOUT)
@@ -70,11 +71,27 @@ public class HttpClientUtils {
         // 去除User-Agent
         HttpRequestInterceptor requestInterceptor = (request, context) -> request.removeHeaders("User-Agent");
 
+        ConnectionKeepAliveStrategy myStrategy = (response, context) -> {
+            HeaderElementIterator it = new BasicHeaderElementIterator
+                    (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
+            while (it.hasNext()) {
+                HeaderElement he = it.nextElement();
+                String param = he.getName();
+                String value = he.getValue();
+                if (value != null && param.equalsIgnoreCase("timeout")) {
+                    return Long.parseLong(value) * 1000;
+                }
+            }
+            return 5 * 1000;
+        };
+
         httpClient = HttpClientBuilder.create()
 //                .disableContentCompression()
                 .setDefaultRequestConfig(config)
                 .setConnectionManager(poolConnManager)
                 .addInterceptorLast(requestInterceptor)
+                .setKeepAliveStrategy(myStrategy)
+                .evictExpiredConnections()
                 .build();
     }
 
@@ -124,22 +141,51 @@ public class HttpClientUtils {
 
     }
 
-    public static String postJson(String url, Map<String, String> params) throws IOException {
-/*        StringEntity stringEntity = new StringEntity(JsonUtil.toJSONString(params), charset);
-        stringEntity.setContentEncoding(HttpConstant.UTF8_ENCODE);
-        stringEntity.setContentType(HttpConstant.APPLICATION_JSON);*/
-        /*StringEntity entity = new StringEntity(JsonUtil.toJSONString(params), ContentType.APPLICATION_JSON);
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(entity);*/
-        return postJson(url, params, HttpConstant.UTF8_ENCODE);
+    public static String postJson(String url, Object obj) {
+        return postJson(url, obj, null);
     }
 
-    public static String postJson(String url, Map<String, String> params, String charset) throws IOException {
-        StringEntity entity = new StringEntity(JsonUtil.toJSONString(params), charset);
+    public static String postJson(String url, Object obj, Map<String, String> header) {
+        try {
+            if (obj instanceof String) {
+                return postJson(url, (String) obj, header, HttpConstant.UTF8_ENCODE);
+            }
+            return postJson(url, JSON.toJSONString(obj), header, HttpConstant.UTF8_ENCODE);
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("post请求出错", e);
+            return null;
+        }
+    }
+
+    public static String postJson(String url, String json, Map<String, String> header, String charset) throws IOException {
+        StringEntity entity = new StringEntity(json, charset);
         entity.setContentEncoding(HttpConstant.UTF8_ENCODE);
         entity.setContentType(HttpConstant.APPLICATION_JSON);
         HttpPost httpPost = new HttpPost(url);
         httpPost.setEntity(entity);
+
+        if (header != null) {
+            for (Map.Entry<String, String> entry : header.entrySet()) {
+
+                httpPost.addHeader(entry.getKey(), entry.getValue());
+//                httpPost.setHeaders();
+            }
+        }
+
+        logger.info("HttpClient PostJson 请求地址：{}  请求头：{} 入参: {}", url, JSON.toJSONString(header), json);
+        return execute(httpPost, charset);
+    }
+
+    public static String postJson(String url, String json, Header[] headers, String charset) throws IOException {
+        StringEntity entity = new StringEntity(json, charset);
+        entity.setContentEncoding(HttpConstant.UTF8_ENCODE);
+        entity.setContentType(HttpConstant.APPLICATION_JSON);
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setEntity(entity);
+        httpPost.setHeaders(headers);
+
+        logger.info("HttpClient PostJson 请求地址：{}  请求头：{} 入参: {}", url, JSON.toJSONString(headers), json);
         return execute(httpPost, charset);
     }
 
