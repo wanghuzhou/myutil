@@ -8,12 +8,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.wanghz.myutil.common.exception.MyUtilRuntimeException;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 
 /**
@@ -133,7 +135,6 @@ public class JsonUtil {
      * @return Json字符串
      */
     public static String toJSONString(Object object) {
-//        return JSON.toJSONString(object, SerializerFeature.DisableCircularReferenceDetect);
         try {
             return OBJECT_MAPPER.writeValueAsString(object);
         } catch (JsonProcessingException e) {
@@ -143,7 +144,7 @@ public class JsonUtil {
     }
 
     /**
-     * 解析复杂嵌套json
+     * 解析json字符串，返回JsonNode树
      *
      * @param jsonStr json字符串
      * @return JsonNode
@@ -158,16 +159,46 @@ public class JsonUtil {
     }
 
     /**
-     * 解析复杂嵌套json
+     * 解析json byte数组，返回JsonNode树
      *
-     * @param object json对象
+     * @param bytes json byte数组
      * @return JsonNode
      */
-    public static JsonNode readTree(Object object) {
+    public static JsonNode readTree(byte[] bytes) {
         try {
-            String jsonStr = OBJECT_MAPPER.writeValueAsString(object);
-            return OBJECT_MAPPER.readTree(jsonStr);
+            return OBJECT_MAPPER.readTree(bytes);
+        } catch (IOException e) {
+            logger.error("Json转换出错", e);
+            throw new MyUtilRuntimeException(e);
+        }
+    }
+
+    /**
+     * JsonNode转实体类
+     *
+     * @param jsonNode  json树
+     * @param valueType 实体类型
+     * @return 实体类
+     */
+    public static <T> T treeToValue(JsonNode jsonNode, Class<T> valueType) {
+        try {
+            return OBJECT_MAPPER.treeToValue(jsonNode, valueType);
         } catch (JsonProcessingException e) {
+            logger.error("Json转换出错", e);
+            throw new MyUtilRuntimeException(e);
+        }
+    }
+
+    /**
+     * 实体类转JsonNode
+     *
+     * @param object 实体类
+     * @return 继承JsonNode泛型
+     */
+    public static <T extends JsonNode> T valueToTree(Object object) {
+        try {
+            return OBJECT_MAPPER.valueToTree(object);
+        } catch (IllegalArgumentException e) {
             logger.error("Json转换出错", e);
             throw new MyUtilRuntimeException(e);
         }

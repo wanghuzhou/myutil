@@ -2,6 +2,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
@@ -130,6 +131,28 @@ public class JsonUtilTest {
         Map map = objectMapper.readValue(json, HashMap.class);
 
         return xmlMapper.writeValueAsString(map);
+    }
+
+    @Test
+    public void test6() {
+        String jsonstr = "{\"msg\":{\"head\":{\"version\":\"1.0\",\"bizcode\":\"1006\",\"senddate\":\"20140827\",\"sendtime\":\"110325\",\"seqid\":\"1\"},\"body\":{\"datalist\":\"wahaha\",\"rstcode\":\"000000\",\"rstmsg\":\"成功\"}}}";
+        JsonNode root = JsonUtil.readTree(jsonstr);
+        System.out.println(root.path("msg").path("body").path("datalist").asText());
+
+        JSONObject jsonObject = JSON.parseObject(jsonstr);
+        JsonNode jsonNode = JsonUtil.valueToTree(jsonObject);
+        System.out.println(jsonNode.toString());
+        System.out.println(jsonNode.get("msg").get("head"));
+        System.out.println(jsonNode.getNodeType());
+
+        String str3 = "[[{\"UploadTime\":1609984620104,\"age\":5,\"applyDate\":1609921962000,\"bussID\":\"37160992196239379\",\"consultationPrice\":0,\"consultationType\":\"1\",\"content\":\"ces\",\"deptID\":\"2J34473o\",\"deptName\":\"儿保科\",\"doctorCertID\":\"\",\"doctorId\":\"10361ZK110008\",\"doctorName\":\"智康测试医生\",\"endDate\":1609924560000,\"mobile\":\"15381189933\",\"onsultationAttribute\":\"1\",\"organID\":\"749FC81F-5E63-20190516A0927\",\"organName\":\"测试机构-122003\",\"patientCertID\":\"330106201510136727\",\"patientCertType\":\"1\",\"patientName\":\"俞敉娜\",\"paymentChannel\":\"9\",\"sex\":0,\"startDate\":1609922485000,\"subjectCode\":\"\",\"subjectName\":\"\",\"unitID\":\"5827290D-52BD-44F0-9EF3-C1C014CE6632\"}]]";
+        String str = "{\"a\":" + str3 + "}";
+        String str2 = "{\"b\": 1234567892131,\"a\":null}";
+        JsonNode jsonNode2 = JsonUtil.readTree(str3);
+        System.out.println(jsonNode2.isArray());
+        System.out.println(jsonNode2.get(0).get(0).toPrettyString());
+        System.out.println(jsonNode2.get(0).get(0).get("UploadTime").asText());
+
     }
 
 }
