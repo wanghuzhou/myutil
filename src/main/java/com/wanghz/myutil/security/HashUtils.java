@@ -4,7 +4,7 @@ import java.security.MessageDigest;
 
 /**
  * 常用 MD5, SHA1, SHA256 摘要算法
- * 推荐使用commons-codec
+ * 推荐使用commons-codec DigestUtils.md5Hex(String str)...
  */
 public class HashUtils {
     private static final char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5',

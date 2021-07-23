@@ -26,7 +26,7 @@ public class OKHttpUtils {
     public final static int READ_TIMEOUT = 30;
     public final static int WRITE_TIMEOUT = 30;
     public static final MediaType JSON = MediaType.parse("application/json;charset=utf-8");
-    private static OkHttpClient mOkHttpClient;
+    private static final OkHttpClient mOkHttpClient;
 
     /**
      * 自定义网络回调接口
