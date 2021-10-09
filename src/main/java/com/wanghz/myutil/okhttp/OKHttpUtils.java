@@ -1,6 +1,7 @@
 package com.wanghz.myutil.okhttp;
 
 import com.wanghz.myutil.http.HttpCommonUtils;
+import com.wanghz.myutil.json.JsonUtil;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,38 +59,19 @@ public class OKHttpUtils {
     }
 
     /**
-     * 单例模式获取OkHttpUtil
-     *
-     * @return
-     */
-/*    public static OKHttpUtils getInstance() {
-        return OKHttpInstance.INSTANCE;
-    }
-
-    private static class OKHttpInstance {
-        private static final OKHttpUtils INSTANCE = new OKHttpUtils();
-    }*/
-
-    /**
      * get请求，同步方式，获取网络数据，是在主线程中执行的，需要新起线程，将其放到子线程中执行
      *
      * @param url
      * @return
      */
     public static Response get(String url) {
-        //1 构造Request
-        Request.Builder builder = new Request.Builder();
-        Request request = builder.get().url(url).build();
-        //2 将Request封装为Call
-        Call call = mOkHttpClient.newCall(request);
-        //3 执行Call，得到response
-        Response response = null;
+        Request request = builder().get().url(url).build();
         try {
-            response = call.execute();
+            return execute(request);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return response;
+        return null;
     }
 
     /**
@@ -100,21 +82,14 @@ public class OKHttpUtils {
      * @return
      */
     public static Response postForm(String url, Map<String, String> bodyParams) {
-        //1构造RequestBody
         RequestBody body = setFormBody(bodyParams);
-        //2 构造Request
-        Request.Builder requestBuilder = new Request.Builder();
-        Request request = requestBuilder.post(body).url(url).build();
-        //3 将Request封装为Call
-        Call call = mOkHttpClient.newCall(request);
-        //4 执行Call，得到response
-        Response response = null;
+        Request request = builder().post(body).url(url).build();
         try {
-            response = call.execute();
+            return execute(request);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return response;
+        return null;
     }
 
     public static Response postForm(String url, Map<String, String> bodyParams, String charset) {
@@ -173,9 +148,7 @@ public class OKHttpUtils {
     public void postAsync(String url, Map<String, String> bodyParams, final NetCall netCall) {
         //1构造RequestBody
         RequestBody body = setFormBody(bodyParams);
-        //2 构造Request
-        Request.Builder requestBuilder = new Request.Builder();
-        Request request = requestBuilder.post(body).url(url).build();
+        Request request = builder().post(body).url(url).build();
         //3 将Request封装为Call
         Call call = mOkHttpClient.newCall(request);
         //4 执行Call
@@ -239,8 +212,7 @@ public class OKHttpUtils {
     public void postJsonAsync(String url, String json, final NetCall netCall) {
         RequestBody body = RequestBody.create(JSON, json);
         //2 构造Request
-        Request.Builder requestBuilder = new Request.Builder();
-        Request request = requestBuilder.post(body).url(url).build();
+        Request request = builder().post(body).url(url).build();
         //3 将Request封装为Call
         Call call = mOkHttpClient.newCall(request);
         //4 执行Call
@@ -253,9 +225,48 @@ public class OKHttpUtils {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 netCall.success(call, response);
-
             }
         });
+    }
+
+    public static Request.Builder builder() {
+        return new Request.Builder();
+    }
+
+    public static Request.Builder jsonBody(Object obj) {
+        return new Request.Builder();
+    }
+
+    public static Response execute(Request request) throws IOException {
+        Response response = mOkHttpClient.newCall(request).execute();
+        if (!response.isSuccessful()) {
+            logger.error("http响应码 {}, 响应信息 {}", response.code(), response.message());
+            if (response.body() != null) {
+                logger.error("http响应body {}", response.body().string());
+            }
+        }
+        return response;
+    }
+
+    public static String executeForString(Request request) {
+        try {
+            return execute(request).body().string();
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("http请求出错", e);
+        }
+        return null;
+    }
+
+    public static <T> T executeForObject(Request request, Class<T> clazz) {
+        try {
+            String resp = execute(request).body().string();
+            return JsonUtil.parseObject(resp, clazz);
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("http请求出错", e);
+        }
+        return null;
     }
 
     /**
@@ -266,18 +277,16 @@ public class OKHttpUtils {
         public Response intercept(Interceptor.Chain chain) throws IOException {
             Request request = chain.request();
 
-            long t1 = System.nanoTime();
-            logger.info(String.format("Sending request %s on %s%n%s",
-                    request.url(), chain.connection(), request.headers()));
-            System.out.printf("Sending request %s on %s%n%s%n",
-                    request.url(), chain.connection(), request.headers());
+            long t1 = System.currentTimeMillis();
+            logger.info(String.format("入参 %s , %s%n%s", request.url(), chain.connection(), request.headers()));
+            System.out.printf("入参 %s , %s %n %s %n", request.url(), chain.connection(), request.headers());
             Response response = chain.proceed(request);
 
-            long t2 = System.nanoTime();
+            long t2 = System.currentTimeMillis();
             ResponseBody responseBody = response.peekBody(1024 * 1024);
-            logger.info(String.format("Received response for %s in %.1fms%n%s",
-                    response.request().url(), (t2 - t1) / 1e6d, response.headers()));
-            System.out.println("出参: " + responseBody.string());
+            logger.debug("http响应头 {}", response.headers());
+            logger.info("http请求信息： url {} , 耗时 {}ms, 出参 {}", response.request().url(), (t2 - t1), responseBody.string());
+            System.out.printf("http请求信息 url %s 耗时 %dms%n%s%n", response.request().url(), (t2 - t1), response.headers());
 
             return response;
         }

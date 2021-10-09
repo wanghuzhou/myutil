@@ -8,7 +8,6 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.wanghz.myutil.json.JsonUtil;
 import com.wanghz.myutil.security.HashUtils;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Test;
 
@@ -137,6 +136,7 @@ public class JsonUtilTest {
     public void test6() {
         String jsonstr = "{\"msg\":{\"head\":{\"version\":\"1.0\",\"bizcode\":\"1006\",\"senddate\":\"20140827\",\"sendtime\":\"110325\",\"seqid\":\"1\"},\"body\":{\"datalist\":\"wahaha\",\"rstcode\":\"000000\",\"rstmsg\":\"成功\"}}}";
         JsonNode root = JsonUtil.readTree(jsonstr);
+        System.out.println("root: " + root.toString());
         System.out.println(root.path("msg").path("body").path("datalist").asText());
 
         JSONObject jsonObject = JSON.parseObject(jsonstr);
