@@ -14,6 +14,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class JsonUtilTest {
@@ -153,6 +154,27 @@ public class JsonUtilTest {
         System.out.println(jsonNode2.get(0).get(0).toPrettyString());
         System.out.println(jsonNode2.get(0).get(0).get("UploadTime").asText());
 
+    }
+
+    @Test
+    public void test7(){
+        Order order = new Order();
+        order.setOrderId(1);
+        order.setItemIds(List.of(10, 30));
+
+        Customer customer = new Customer();
+        customer.setId(2);
+        customer.setName("Peter");
+        customer.setOrder(order);
+        order.setCustomer(customer);
+
+        System.out.println(customer);
+        System.out.println("-- serializing --");
+        String s = JsonUtil.toJSONString(customer);
+        System.out.println(s);
+        System.out.println("-- deserializing --");
+        Customer customer2 = JsonUtil.parseObject(s, Customer.class);
+        System.out.println(customer2);
     }
 
 }
