@@ -40,12 +40,12 @@ public class OKHttpUtils {
 
     static {
         OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-        clientBuilder.connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS);//连接超时
-        clientBuilder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS);//读取超时
-        clientBuilder.writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS);//写入超时
-        //支持HTTPS请求，跳过证书验证
-        clientBuilder.sslSocketFactory(HttpCommonUtils.createSSLSocketFactory(), HttpCommonUtils.trustAllCerts());
-        clientBuilder.hostnameVerifier(HttpCommonUtils.trustHostnameVerifier());
+        clientBuilder.connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS) //连接超时
+                .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS) //读取超时
+                .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS) //写入超时
+                //支持HTTPS请求，跳过证书验证
+                .sslSocketFactory(HttpCommonUtils.createSSLSocketFactory(), HttpCommonUtils.trustAllCerts())
+                .hostnameVerifier(HttpCommonUtils.trustHostnameVerifier());
 
         // 连接复用默认配置
         ConnectionPool connectionPool = new ConnectionPool(5, 5, TimeUnit.MINUTES);
@@ -233,8 +233,14 @@ public class OKHttpUtils {
         return new Request.Builder();
     }
 
-    public static Request.Builder jsonBody(Object obj) {
-        return new Request.Builder();
+    public static Request.Builder json(String url, Object obj) {
+        RequestBody body;
+        if (obj instanceof String) {
+            body = RequestBody.create(JSON, (String) obj);
+        } else {
+            body = RequestBody.create(JSON, JsonUtil.toJSONString(obj));
+        }
+        return builder().url(url).post(body);
     }
 
     public static Response execute(Request request) throws IOException {

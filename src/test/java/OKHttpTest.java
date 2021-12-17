@@ -1,4 +1,7 @@
 import com.wanghz.myutil.okhttp.OKHttpUtils;
+import okhttp3.FormBody;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.Test;
 
@@ -23,8 +26,17 @@ public class OKHttpTest {
                 "    \"name\": \"哈哈wanghz\",\n" +
                 "    \"age\": \"22\"\n" +
                 "}";
-        String test = OKHttpUtils.postJson("http://localhost:8080/test/hello", json);
-        System.out.println(test);
+//        String test = OKHttpUtils.postJson("http://localhost:8080/test/hello", json);
+        Request request = OKHttpUtils.json("http://localhost:8082/base/detail", "{\"id\":3}").build();
+        String resp = OKHttpUtils.executeForString(request);
+//        System.out.println(test);
+        System.out.println(resp);
+
+        RequestBody formBody = new FormBody.Builder().add("hosId", "769031850").build();
+        Request request2 = OKHttpUtils.builder().url("http://localhost:8082/base/detail").post(formBody).build();
+        resp = OKHttpUtils.executeForString(request2);
+        System.out.println(resp);
+
     }
 
     @Test
