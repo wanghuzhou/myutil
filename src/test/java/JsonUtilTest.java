@@ -181,4 +181,25 @@ public class JsonUtilTest {
 
     }
 
+    @Test
+    public void test7(){
+        Order order = new Order();
+        order.setOrderId(1);
+        order.setItemIds(List.of(10, 30));
+
+        Customer customer = new Customer();
+        customer.setId(2);
+        customer.setName("Peter");
+        customer.setOrder(order);
+        order.setCustomer(customer);
+
+        System.out.println(customer);
+        System.out.println("-- serializing --");
+        String s = JsonUtil.toJSONString(customer);
+        System.out.println(s);
+        System.out.println("-- deserializing --");
+        Customer customer2 = JsonUtil.parseObject(s, Customer.class);
+        System.out.println(customer2);
+    }
+
 }
