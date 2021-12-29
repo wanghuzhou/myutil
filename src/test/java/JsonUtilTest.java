@@ -82,17 +82,19 @@ public class JsonUtilTest {
     public void test5() throws IOException {
 
         String xml = "<User><username>waddd</username><password>dsafsdf</password><a>0</a><b>0.0</b></User>";
+        // xml字符串转实体类, map, JSONObject
         User user = xmlMapper.readValue(xml, User.class);
         System.out.println(user.toString());
 
-        Map<String, Object> xmlMap = xmlMapper.readValue(xml, new TypeReference<Map<String, Object>>() {
+        Map<String, Object> xmlMap = xmlMapper.readValue(xml, new TypeReference<>() {
         });
         System.out.println(xmlMap.get("username"));
 
-        JSONObject jsonObject = xmlMapper.readValue(xml, new TypeReference<JSONObject>() {
+        JSONObject jsonObject = xmlMapper.readValue(xml, new TypeReference<>() {
         });
         System.out.println(jsonObject.getString("username"));
 
+        // xml字符串转JsonNode, ArrayNode
         JsonNode jsonNode = xmlMapper.readValue(xml, JsonNode.class);
         System.out.println(jsonNode.path("username").asText());
 
@@ -102,12 +104,6 @@ public class JsonUtilTest {
         System.out.println(json2map2xml(json));
 
         xml = "<User><list><username>waddd</username></list><list><username><u1>waddd2</u1></username></list></User>";
-        List<Map<String, Object>> list = xmlMapper.readValue(xml, new TypeReference<List<Map<String, Object>>>() {
-        });
-        JSONArray jsonArray = xmlMapper.readValue(xml, new TypeReference<JSONArray>() {
-        });
-        System.out.println(list.get(0).get("username"));
-        System.out.println(jsonArray.getJSONObject(1).getJSONObject("username").getString("u1"));
 
         ArrayNode arrayNode = XmlUtil.parseArray(xml, ArrayNode.class);
         System.out.println(arrayNode.get(1).path("username").path("u1").asText());
@@ -182,7 +178,7 @@ public class JsonUtilTest {
     }
 
     @Test
-    public void test7(){
+    public void test7() {
         Order order = new Order();
         order.setOrderId(1);
         order.setItemIds(List.of(10, 30));
