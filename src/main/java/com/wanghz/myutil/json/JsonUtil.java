@@ -1,10 +1,13 @@
 package com.wanghz.myutil.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.wanghz.myutil.common.exception.MyUtilRuntimeException;
@@ -29,6 +32,10 @@ public class JsonUtil {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .setTimeZone(TimeZone.getDefault())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    // 忽略未知属性
+//            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
+    // 序列化显示class类型
+//            .activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_ARRAY);
 
     private JsonUtil() {
     }
