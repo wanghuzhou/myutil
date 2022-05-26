@@ -203,12 +203,7 @@ public class JsonUtil {
      * @return 继承JsonNode泛型
      */
     public static <T extends JsonNode> T valueToTree(Object object) {
-        try {
-            return OBJECT_MAPPER.valueToTree(object);
-        } catch (IllegalArgumentException e) {
-            logger.error("Json转换出错", e);
-            throw new MyUtilRuntimeException(e);
-        }
+        return OBJECT_MAPPER.valueToTree(object);
     }
 
 

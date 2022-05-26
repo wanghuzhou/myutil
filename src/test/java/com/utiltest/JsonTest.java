@@ -29,6 +29,7 @@ public class JsonTest {
         jsonObject1.put("key", "val2");
         System.out.println(jsonObject.toJSONString());
         System.out.println(jsonObject1.toJSONString());
+        System.out.println(jsonObject1.getJSONObject("dd"));
 
     }
 
