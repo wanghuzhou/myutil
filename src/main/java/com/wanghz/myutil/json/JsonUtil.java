@@ -31,9 +31,14 @@ public class JsonUtil {
     private static final Logger logger = LoggerFactory.getLogger(JsonUtil.class);
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .setTimeZone(TimeZone.getDefault())
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    // 忽略未知属性
-//            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
+            // 非空
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            // 小驼峰
+//            .setPropertyNamingStrategy(PropertyNamingStrategy.LOWER_CAMEL_CASE)
+            // 大小写不敏感
+//            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+            // 忽略未知字段
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     // 序列化显示class类型
 //            .activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_ARRAY);
 
@@ -53,6 +58,7 @@ public class JsonUtil {
         SimpleModule simpleModule = new SimpleModule();
         simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
         simpleModule.addSerializer(Long.class, ToStringSerializer.instance);
+//        OBJECT_MAPPER.registerModule(simpleModule).registerModule(new JavaTimeModule());
         OBJECT_MAPPER.registerModule(simpleModule);
     }
 
@@ -82,19 +88,9 @@ public class JsonUtil {
      * @param object 实体类
      * @return Map<String, String>
      */
-    public static <K, V> Map<K, V> parseMap(Object object) {
-        try {
-            String jsonStr = OBJECT_MAPPER.writeValueAsString(object);
-            return OBJECT_MAPPER.readValue(jsonStr, new TypeReference<Map<K, V>>() {
-                @Override
-                public Type getType() {
-                    return super.getType();
-                }
-            });
-        } catch (JsonProcessingException e) {
-            logger.error("Json格式化错误", e);
-            throw new MyUtilRuntimeException(e);
-        }
+    public static <K, V> Map<K, V> convertMap(Object object) {
+        return OBJECT_MAPPER.convertValue(object, new TypeReference<>() {
+        });
     }
 
     /**
@@ -124,7 +120,7 @@ public class JsonUtil {
      * @param jsonStr Json字符串
      * @param clazz   pojo类型
      * @param <T>     泛型Class类型
-     * @return 转换完毕Pojo的List对象
+     * @return 转换完毕Pojo对象
      */
     public static <T> T parseObject(String jsonStr, Class<T> clazz) {
         try {
@@ -132,6 +128,23 @@ public class JsonUtil {
         } catch (JsonProcessingException e) {
             logger.error("Json转换出错", e);
             throw new MyUtilRuntimeException(e);
+        }
+    }
+
+    /**
+     * Json字符串转换成Pojo对象，方便泛型嵌套的对象
+     *
+     * @param jsonStr       Json字符串
+     * @param typeReference 类型参考
+     * @param <T>           泛型Class类型
+     * @return 转换完毕Pojo对象
+     */
+    public static <T> T parseObject(String jsonStr, TypeReference<T> typeReference) {
+        try {
+            return OBJECT_MAPPER.readValue(jsonStr, typeReference);
+        } catch (JsonProcessingException e) {
+            logger.error("Json转换出错", e);
+            return null;
         }
     }
 
