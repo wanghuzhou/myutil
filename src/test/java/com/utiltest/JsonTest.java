@@ -68,4 +68,11 @@ public class JsonTest {
         System.out.println(jsonNode2.get(0).get(0).get("UploadTime").asText());
 
     }
+
+    @Test
+    public void test4(){
+        String str = "{\"a\":\"aaa\", \"b\":[{\"a\":\"1\"},{\"a\":\"2\"}]}";
+        Abc abc = JsonUtil.parseObject(str, Abc.class);
+        System.out.println(abc);
+    }
 }
