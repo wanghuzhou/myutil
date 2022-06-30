@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -37,6 +38,8 @@ public class JsonUtil {
 //            .setPropertyNamingStrategy(PropertyNamingStrategy.LOWER_CAMEL_CASE)
             // 大小写不敏感
 //            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+            // 忽略注解
+//            .configure(MapperFeature.USE_ANNOTATIONS, false)
             // 忽略未知字段
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     // 序列化显示class类型
