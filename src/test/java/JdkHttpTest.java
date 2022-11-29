@@ -1,3 +1,4 @@
+import com.wanghz.myutil.http.JDK11HttpUtils;
 import com.wanghz.myutil.http.JDKHttpUtils;
 import org.junit.Test;
 
@@ -21,6 +22,13 @@ public class JdkHttpTest {
         Map<String, Object> map = new HashMap<>();
         map.put("name", "ddd");
         String s = JDKHttpUtils.get(tmpUrl);
+        System.out.println(s);
+    }
+
+    @Test
+    public void reqGet3() {
+        String tmpUrl = "https://www.baidu.com";
+        String s = JDK11HttpUtils.get(tmpUrl);
         System.out.println(s);
     }
 
