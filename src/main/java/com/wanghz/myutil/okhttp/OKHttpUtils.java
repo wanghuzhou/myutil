@@ -27,7 +27,7 @@ public class OKHttpUtils {
     public final static int READ_TIMEOUT = 30;
     public final static int WRITE_TIMEOUT = 30;
     public static final MediaType JSON = MediaType.parse("application/json;charset=utf-8");
-    private static final OkHttpClient mOkHttpClient;
+    public static final OkHttpClient mOkHttpClient;
 
     /**
      * 自定义网络回调接口
@@ -229,6 +229,14 @@ public class OKHttpUtils {
         });
     }
 
+/*    public static HttpUrl urlParse(String url) {
+        HttpUrl httpUrl =HttpUrl.parse(url)
+                .newBuilder()
+                .addQueryParameter("access_token", "")
+                .build();
+        return httpUrl;
+    }*/
+
     public static Request.Builder builder() {
         return new Request.Builder();
     }
@@ -264,9 +272,12 @@ public class OKHttpUtils {
         return null;
     }
 
-    public static <T> T executeForObject(Request request, Class<T> clazz) {
+    public static <T> T executeForEntity(Request request, Class<T> clazz) {
         try {
             String resp = execute(request).body().string();
+            if (clazz == String.class) {
+                return (T) resp;
+            }
             return JsonUtil.parseObject(resp, clazz);
         } catch (IOException e) {
             e.printStackTrace();

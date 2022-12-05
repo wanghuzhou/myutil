@@ -47,4 +47,21 @@ public class OKHttpTest {
         System.out.println(test.body().string());
     }
 
+    @Test
+    public void test4() {
+        Request request = new Request.Builder().get().url("http://www.baidu.com/").build();
+        String s = OKHttpUtils.executeForEntity(request, String.class);
+        System.out.println(s);
+    }
+
+    @Test
+    public void test5() {
+        Request request = new Request.Builder().get().url("http://www.baidu.com/").build();
+        try (Response response = OKHttpUtils.mOkHttpClient.newCall(request).execute()) {
+            System.out.println(response.body().string());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
