@@ -7,6 +7,8 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -64,6 +66,25 @@ public class HttpClientTest {
         param.put("age", "22");
 
         String result = HttpClientUtils.post(url, param);
+        System.out.println(result);
+    }
+
+    /**
+     * httpclient Builder模式创建请求
+     */
+    @Test
+    public void requestBuilderTest() throws IOException {
+        String url = "http://127.0.0.1:8080/getReqInfo";
+        HttpUriRequest request = RequestBuilder
+                .post()
+                .setUri(url)
+                // 默认为Consts.UTF_8
+//                .setCharset(Consts.UTF_8)
+                .addParameter("name", "哈哈")
+                .addParameter("age", "22")
+                .build();
+
+        String result = HttpClientUtils.execute(request);
         System.out.println(result);
     }
 
