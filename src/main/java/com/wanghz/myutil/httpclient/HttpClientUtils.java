@@ -19,6 +19,7 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -304,5 +305,9 @@ public class HttpClientUtils {
         return data.entrySet().stream()
                 .map(entry -> new BasicNameValuePair(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
+    }
+
+    public static StringEntity json2Entity(String json) {
+        return new StringEntity(json, ContentType.APPLICATION_JSON);
     }
 }
