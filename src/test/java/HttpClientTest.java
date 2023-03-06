@@ -1,9 +1,6 @@
 import com.wanghz.myutil.http.HttpConstant;
 import com.wanghz.myutil.httpclient.HttpClientUtils;
-import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
+import org.apache.http.*;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -15,6 +12,9 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.BufferedHttpEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -30,10 +30,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HttpClientTest {
 
@@ -75,17 +72,24 @@ public class HttpClientTest {
     @Test
     public void requestBuilderTest() throws IOException {
         String url = "http://127.0.0.1:8080/getReqInfo";
-        HttpUriRequest request = RequestBuilder
+        RequestBuilder rb = RequestBuilder
                 .post()
                 .setUri(url)
-                // 默认为Consts.UTF_8
+                // 默认为 Consts.UTF_8
 //                .setCharset(Consts.UTF_8)
                 .addParameter("name", "哈哈")
-                .addParameter("age", "22")
-                .build();
-
-        String result = HttpClientUtils.execute(request);
+                .addParameter("age", "22");
+        String result = HttpClientUtils.execute(rb);
         System.out.println(result);
+
+        RequestBuilder rb2 = RequestBuilder
+                .post()
+                .setUri(url)
+                .addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType())
+                .setEntity(HttpClientUtils.json2Entity("{\"outhospNo\":\"aaaa顶顶顶顶\"}"));
+        String result2 = HttpClientUtils.execute(rb2);
+        System.out.println(result2);
+
     }
 
     /**

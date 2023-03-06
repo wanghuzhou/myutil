@@ -7,10 +7,7 @@ import com.wanghz.myutil.http.HttpConstant;
 import org.apache.http.*;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -40,6 +37,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -188,6 +186,14 @@ public class HttpClientUtils {
 
         logger.info("HttpClient PostJson 请求地址：{}  请求头：{} 入参: {}", url, JSON.toJSONString(headers), json);
         return execute(httpPost, charset);
+    }
+
+    public static String execute(final RequestBuilder rb) throws IOException {
+        HttpUriRequest request = rb.build();
+        logger.info("HttpClient 请求行：{}  请求头：{} 表单入参: {} json: {}", request.getRequestLine(),
+                Arrays.toString(request.getAllHeaders()), rb.getParameters(),
+                rb.getEntity() == null ? null : EntityUtils.toString(rb.getEntity()));
+        return execute(request, HttpConstant.UTF8_ENCODE);
     }
 
     public static String execute(final HttpUriRequest request) throws IOException {
