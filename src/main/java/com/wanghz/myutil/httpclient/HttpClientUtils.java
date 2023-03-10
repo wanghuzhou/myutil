@@ -18,6 +18,8 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -31,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
@@ -186,6 +189,19 @@ public class HttpClientUtils {
 
         logger.info("HttpClient PostJson 请求地址：{}  请求头：{} 入参: {}", url, JSON.toJSONString(headers), json);
         return execute(httpPost, charset);
+    }
+
+    public static String uploadFile(String url, String filePath) throws IOException {
+        MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+        multipartEntityBuilder.addPart("file", new FileBody(new File(filePath)));
+
+        HttpUriRequest request = RequestBuilder.post().setUri(url)
+                .addHeader(HttpHeaders.CONTENT_TYPE, ContentType.MULTIPART_FORM_DATA.getMimeType())
+                .setEntity(multipartEntityBuilder.build())
+                .build();
+
+        logger.info("HttpClient 文件上传 {}", request.getRequestLine());
+        return execute(request);
     }
 
     public static String execute(final RequestBuilder rb) throws IOException {
