@@ -9,9 +9,9 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * id 获取器
+ * 雪花算法获取唯一id 从MybatisPlus抽离
  *
- * @author wanghuzhou modify from mybatisPlus
+ * @author wanghuzhou
  * @date 2016-08-01
  */
 public class IdWorker {
