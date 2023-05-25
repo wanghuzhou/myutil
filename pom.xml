@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <fastjson.version>1.2.83</fastjson.version>
         <jackson.version>2.14.1</jackson.version>
         <fastjson.version>1.2.83</fastjson.version>
