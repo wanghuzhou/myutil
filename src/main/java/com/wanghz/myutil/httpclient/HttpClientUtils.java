@@ -18,6 +18,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -194,6 +195,8 @@ public class HttpClientUtils {
     public static String uploadFile(String url, String filePath) throws IOException {
         MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
         multipartEntityBuilder.addPart("file", new FileBody(new File(filePath)));
+        // 设置RFC6532 防止乱码
+        multipartEntityBuilder.setMode(HttpMultipartMode.RFC6532);
 
         HttpUriRequest request = RequestBuilder.post().setUri(url)
                 .addHeader(HttpHeaders.CONTENT_TYPE, ContentType.MULTIPART_FORM_DATA.getMimeType())
