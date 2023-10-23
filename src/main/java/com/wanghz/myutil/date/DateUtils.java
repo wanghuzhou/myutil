@@ -31,7 +31,6 @@ public class DateUtils {
     public static final DateTimeFormatter UTC_WITH_XXX_OFFSET_FORMAT = DateTimeFormatter.ofPattern(UTC_WITH_XXX_OFFSET_PATTERN);
 
     public static final DateTimeFormatter dtf_ZE = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ E");
-    public static final DateTimeFormatter dtf_XXXZ = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
 
     /**
