@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -190,6 +191,38 @@ public class HttpClientUtils {
 
         logger.info("HttpClient PostJson 请求地址：{}  请求头：{} 入参: {}", url, JSON.toJSONString(headers), json);
         return execute(httpPost, charset);
+    }
+
+    public static InputStream downloadFile(String url) {
+        HttpGet httpGet = new HttpGet(url);
+        long startTime = System.currentTimeMillis();
+        CloseableHttpResponse response;
+        try {
+            response = httpClient.execute(httpGet);
+        } catch (IOException e) {
+            logger.error("HttpClient 请求文件出错 {}", url, e);
+            return null;
+        }
+        long endTime = System.currentTimeMillis();
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode != HttpStatus.SC_OK) {
+            httpGet.abort();
+            logger.error("HttpClient 请求文件出错 错误码: {}  错误信息: {}  耗时：{} 毫秒",
+                    statusCode, response.getStatusLine().getReasonPhrase(), endTime - startTime);
+            return null;
+        }
+        HttpEntity entity = response.getEntity();
+        InputStream inputStream = null;
+        if (entity != null) {
+            try {
+                inputStream = entity.getContent();
+            } catch (IOException e) {
+                logger.error("HttpClient 下载文件出错", e);
+                return null;
+            }
+        }
+        logger.info("HttpClient 耗时：{} 毫秒", endTime - startTime);
+        return inputStream;
     }
 
     public static String uploadFile(String url, String filePath) throws IOException {
